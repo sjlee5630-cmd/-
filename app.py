@@ -4,8 +4,8 @@
 실행:  streamlit run app.py
 접속:  http://localhost:8501
 --------------------------------------
-예측 기준: 강수확률  0~20%미만=A(맑음) / 20~50%미만=B(흐림) / 50%이상=C(비)
-실측 기준: 강수량    0mm=A(맑음)       / 0~5mm=B(흐림)      / 5mm이상=C(비)
+예측 기준: 강수확률  0~20%미만=☀(맑음) / 20~50%미만=☁(흐림) / 50%이상=🌧(비)
+실측 기준: 강수량    0mm=☀(맑음)       / 0~5mm=☁(흐림)      / 5mm이상=🌧(비)
 """
 
 import streamlit as st
@@ -35,6 +35,13 @@ SUN_BG    = "#FFEBEE"
 SAT_COL   = "#1565C0"
 SUN_COL   = "#C62828"
 EMPTY_BG  = "#F5F5F5"
+
+# A/B/C → 이모지 매핑
+WX_EMOJI = {"A": "☀", "B": "☁", "C": "🌧"}
+WX_LABEL = {"A": "맑음", "B": "흐림", "C": "비"}
+
+def wx_icon(code):
+    return WX_EMOJI.get(code, code)
 
 
 # ── 통계 함수 ─────────────────────────────────────────────────────────────────
@@ -117,18 +124,18 @@ def day_html(day, r, dow, cur_f):
         f'''<div style="background:{fb};padding:2px 5px;display:flex;
           align-items:center;gap:4px;flex:1;border-top:1px solid #eee">
           <span style="font-size:.58rem;color:#aaa;width:16px">예측</span>
-          <span style="font-size:1.05rem;font-weight:800;color:{ft}">{r["fc"]}</span>
-          <span style="font-size:.65rem;color:{ft};opacity:.8">
-            {"맑음" if r["fc"]=="A" else "흐림" if r["fc"]=="B" else "비"}</span>
+          <span style="font-size:1.3rem;line-height:1">{wx_icon(r["fc"])}</span>
+          <span style="font-size:.65rem;color:{ft};font-weight:600">
+            {WX_LABEL.get(r["fc"],"")}</span>
         </div>''' +
 
         # 실측 행
         f'''<div style="background:{ab};padding:2px 5px;display:flex;
           align-items:center;gap:4px;flex:1;border-top:1px solid #eee">
           <span style="font-size:.58rem;color:#aaa;width:16px">실측</span>
-          <span style="font-size:1.05rem;font-weight:800;color:{at}">{r["act"]}</span>
-          <span style="font-size:.65rem;color:{at};opacity:.8">
-            {"맑음" if r["act"]=="A" else "흐림" if r["act"]=="B" else "비"}</span>
+          <span style="font-size:1.3rem;line-height:1">{wx_icon(r["act"])}</span>
+          <span style="font-size:.65rem;color:{at};font-weight:600">
+            {WX_LABEL.get(r["act"],"")}</span>
         </div>''' +
 
         # 수치 행
@@ -171,9 +178,9 @@ st.markdown('''
   </h2>
   <p style="margin:0;opacity:.88;font-size:.87rem">
     기상 예측 vs 실측 비교 &nbsp;·&nbsp;
-    <b>A</b> = 맑음 &nbsp;|&nbsp;
-    <b>B</b> = 흐림 &nbsp;|&nbsp;
-    <b>C</b> = 비
+    ☀ 맑음 &nbsp;|&nbsp;
+    ☁ 흐림 &nbsp;|&nbsp;
+    🌧 비
   </p>
 </div>''', unsafe_allow_html=True)
 
@@ -185,12 +192,12 @@ cards = [
     (f"{a['acc']}%",  "연간 정확도"),
     (f"{a['ok']}일",  "✅ 일치"),
     (f"{a['miss']}일","❌ 불일치"),
-    (f"{a['fcA']}일", "예측 A 맑음"),
-    (f"{a['fcB']}일", "예측 B 흐림"),
-    (f"{a['fcC']}일", "예측 C 비"),
-    (f"{a['acA']}일", "실측 A 맑음"),
-    (f"{a['acB']}일", "실측 B 흐림"),
-    (f"{a['acC']}일", "실측 C 비"),
+    (f"{a['fcA']}일", "예측 ☀ 맑음"),
+    (f"{a['fcB']}일", "예측 ☁ 흐림"),
+    (f"{a['fcC']}일", "예측 🌧 비"),
+    (f"{a['acA']}일", "실측 ☀ 맑음"),
+    (f"{a['acB']}일", "실측 ☁ 흐림"),
+    (f"{a['acC']}일", "실측 🌧 비"),
     (f"{a['mm']}mm",  "연간 강수량"),
 ]
 for col, (num, lbl) in zip(cols, cards):
@@ -202,18 +209,18 @@ st.markdown('''
 <div style="display:flex;flex-wrap:wrap;gap:5px 16px;font-size:.8rem;
   color:#555;margin:.4rem 0 .8rem;align-items:center">
   <span style="background:#FFF9C4;border:1px solid #F9E400;
-    padding:2px 8px;border-radius:4px;font-weight:700;color:#7B5800">A</span>맑음
+    padding:2px 8px;border-radius:4px;font-size:1rem">☀</span>맑음
   <span style="background:#BBDEFB;border:1px solid #90CAF9;
-    padding:2px 8px;border-radius:4px;font-weight:700;color:#0D47A1">B</span>흐림
+    padding:2px 8px;border-radius:4px;font-size:1rem">☁</span>흐림
   <span style="background:#C8E6C9;border:1px solid #A5D6A7;
-    padding:2px 8px;border-radius:4px;font-weight:700;color:#1B5E20">C</span>비
+    padding:2px 8px;border-radius:4px;font-size:1rem">🌧</span>비
   <span style="background:#E8F5E9;border:2px solid #43A047;
     padding:2px 8px;border-radius:4px;font-size:.72rem">초록테두리 = 예측↔실측 일치</span>
   <span style="background:#FFEBEE;border:2px solid #E53935;
     padding:2px 8px;border-radius:4px;font-size:.72rem">빨강테두리 = 불일치</span>
   <span style="font-size:.73rem;color:#aaa">
-    | 예측: 0~20%=A / 20~50%=B / 50%+=C &nbsp;·&nbsp;
-      실측: 0mm=A / 0~5mm=B / 5mm+=C
+    | 예측: 0~20%=☀ / 20~50%=☁ / 50%+=🌧 &nbsp;·&nbsp;
+      실측: 0mm=☀ / 0~5mm=☁ / 5mm+=🌧
   </span>
 </div>''', unsafe_allow_html=True)
 
@@ -242,8 +249,8 @@ if cur_m > 0:
     s = mon_stats(cur_m)
     def badge(code, n):
         return (f'''<span style="background:{BG[code]};color:{TC[code]};
-          padding:1px 8px;border-radius:4px;font-weight:700;
-          font-size:.8rem">{code} {n}일</span>''')
+          padding:1px 8px;border-radius:4px;font-weight:600;
+          font-size:.82rem">{WX_EMOJI[code]} {n}일</span>''')
 
     st.markdown(
         f'''<div style="background:#fff;border-radius:10px;
@@ -331,6 +338,6 @@ st.markdown("---")
 st.markdown('''
 <p style="text-align:center;font-size:.73rem;color:#aaa;line-height:2.2">
   데이터: 기상청 강수확률 예보 (2025.01~12) + Open-Meteo 실측 강수량 · 양재1동<br>
-  예측 기준: 0~20%미만=A(맑음) / 20~50%미만=B(흐림) / 50%이상=C(비)<br>
-  실측 기준: 0mm=A(맑음) / 0~5mm=B(흐림) / 5mm이상=C(비)
+  예측 기준: 0~20%미만=☀(맑음) / 20~50%미만=☁(흐림) / 50%이상=🌧(비)<br>
+  실측 기준: 0mm=☀(맑음) / 0~5mm=☁(흐림) / 5mm이상=🌧(비)
 </p>''', unsafe_allow_html=True)
