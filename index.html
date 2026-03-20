@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>양재1동 2025 날씨 달력</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Malgun Gothic","맑은 고딕",sans-serif;background:#EEF3F9;color:#222}
+
+/* ── 헤더 ── */
+header{background:linear-gradient(135deg,#1F4E79,#2E75B6);color:#fff;
+  padding:1.6rem 1rem 1.2rem;text-align:center}
+header h1{font-size:clamp(1.2rem,3vw,1.7rem);margin-bottom:.4rem}
+header p{font-size:.85rem;opacity:.85}
+
+/* ── 통계 카드 ── */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+  gap:10px;max-width:900px;margin:1.4rem auto 0;padding:0 1rem}
+.stat{background:#fff;border-radius:12px;padding:.9rem .8rem;text-align:center;
+  box-shadow:0 2px 8px rgba(0,0,0,.07)}
+.stat-n{font-size:1.5rem;font-weight:700;color:#1F4E79}
+.stat-l{font-size:.7rem;color:#888;margin-top:3px}
+
+/* ── 컨트롤 ── */
+.ctrl{max-width:900px;margin:1.2rem auto 0;padding:0 1rem;
+  display:flex;flex-wrap:wrap;gap:.8rem;align-items:flex-end}
+.ctrl-group label{display:block;font-size:.72rem;font-weight:600;
+  color:#555;margin-bottom:.35rem;letter-spacing:.04em}
+.month-tabs{display:flex;flex-wrap:wrap;gap:5px}
+.mtab{padding:5px 11px;border-radius:20px;border:1.5px solid #ccc;
+  background:#fff;font-size:.78rem;cursor:pointer;font-family:inherit;transition:.15s}
+.mtab:hover{border-color:#2E75B6;color:#2E75B6}
+.mtab.on{background:#1F4E79;color:#fff;border-color:#1F4E79}
+.ftabs{display:flex;gap:5px}
+.ftab{padding:5px 13px;border-radius:20px;border:1.5px solid #ccc;
+  background:#fff;font-size:.78rem;cursor:pointer;font-family:inherit;transition:.15s}
+.ftab:hover{border-color:#555}
+.ftab.on{background:#1F4E79;color:#fff;border-color:#1F4E79}
+
+/* ── 월 요약바 ── */
+.mbar{max-width:900px;margin:.8rem auto 0;padding:0 1rem}
+.mbar-inner{background:#fff;border-radius:10px;padding:.75rem 1rem;
+  font-size:.82rem;display:flex;flex-wrap:wrap;gap:.4rem 1.2rem;align-items:center;
+  box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.em-badge{padding:1px 7px;border-radius:4px;font-size:.8rem;font-weight:600}
+.em-A{background:#FFF9C4;color:#7B5800}
+.em-B{background:#BBDEFB;color:#0D47A1}
+.em-C{background:#C8E6C9;color:#1B5E20}
+.acc-wrap{display:flex;align-items:center;gap:6px;flex:1;min-width:160px}
+.acc-bg{flex:1;height:7px;background:#eee;border-radius:4px;overflow:hidden}
+.acc-fill{height:100%;background:#7CB342;border-radius:4px;transition:width .4s}
+.acc-pct{font-size:.82rem;font-weight:700;color:#33691E}
+
+/* ── 달력 ── */
+.cals{max-width:900px;margin:1rem auto 2rem;padding:0 1rem;
+  display:flex;flex-direction:column;gap:1.6rem}
+.month-block{background:#fff;border-radius:14px;overflow:hidden;
+  box-shadow:0 2px 10px rgba(0,0,0,.07)}
+.month-hd{background:#2E75B6;color:#fff;padding:.65rem 1rem;
+  font-size:1rem;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+.month-hd span{font-size:.78rem;font-weight:400;opacity:.85}
+.cal-inner{padding:.7rem}
+.dow-row{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:3px}
+.dow-row div{text-align:center;padding:.3rem 0;font-size:.72rem;font-weight:700;
+  border-radius:5px;background:#F0F4F8;color:#555}
+.dow-row div:nth-child(6){color:#1565C0;background:#E3F2FD}
+.dow-row div:nth-child(7){color:#C62828;background:#FFEBEE}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:3px}
+
+/* ── 날짜 셀 ── */
+.dc{border-radius:8px;min-height:80px;display:flex;flex-direction:column;
+  border:1.5px solid #E0E0E0;overflow:hidden;transition:transform .12s,box-shadow .12s;cursor:default}
+.dc:hover{transform:scale(1.04);box-shadow:0 4px 14px rgba(0,0,0,.13);z-index:2}
+.dc.empty{background:#F8F8F8;border-color:#ECECEC}
+.dc.match{border-color:#7CB342;border-width:2px}
+.dc.miss {border-color:#E57373;border-width:2px}
+.dc.faded{opacity:.22}
+.dc.sat .dnum{color:#1565C0}
+.dc.sun .dnum{color:#C62828}
+
+.dnum-bar{padding:3px 5px 2px;display:flex;justify-content:space-between;align-items:center}
+.dc.match .dnum-bar{background:#DCEDC8}
+.dc.miss  .dnum-bar{background:#FFCDD2}
+.dc:not(.match):not(.miss):not(.empty) .dnum-bar{background:#F5F5F5}
+.dnum{font-size:.82rem;font-weight:700;color:#1F4E79}
+.micon{font-size:.65rem}
+
+/* 예보/실측 이모지 행 */
+.wx-wrap{display:flex;flex-direction:column;flex:1;justify-content:center;gap:1px;padding:2px 4px}
+.wx-row{display:flex;align-items:center;gap:3px}
+.wlbl{font-size:.58rem;color:#aaa;width:13px;flex-shrink:0}
+.emoji{font-size:1.2rem;line-height:1}
+.wx-txt{font-size:.68rem;font-weight:600}
+.wx-txt.A{color:#7B5800}
+.wx-txt.B{color:#0D47A1}
+.wx-txt.C{color:#1B5E20}
+
+.dval{font-size:.58rem;color:#aaa;padding:1px 4px 3px;text-align:right}
+
+/* ── 범례 ── */
+.legend{max-width:900px;margin:.6rem auto 0;padding:0 1rem;
+  display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.78rem;color:#555;align-items:center}
+.leg{display:flex;align-items:center;gap:4px}
+.leg-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+
+footer{text-align:center;padding:1.2rem;font-size:.73rem;color:#999;
+  border-top:1px solid #dde;background:#fff;line-height:1.9}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🌤 양재1동 2025년 날씨 달력</h1>
+  <p>기상 예보 vs 실측 비교 &nbsp;·&nbsp; ☀ 맑음(A) &nbsp;|&nbsp; ☁ 흐림(B) &nbsp;|&nbsp; 🌧 비(C)</p>
+</header>
+
+<div class="stats" id="stats"></div>
+
+<div class="legend">
+  <div class="leg"><div class="leg-dot" style="background:#FFF9C4;border:1px solid #F9E400"></div>A = 맑음 ☀</div>
+  <div class="leg"><div class="leg-dot" style="background:#BBDEFB;border:1px solid #90CAF9"></div>B = 흐림 ☁</div>
+  <div class="leg"><div class="leg-dot" style="background:#C8E6C9;border:1px solid #A5D6A7"></div>C = 비 🌧</div>
+  <div class="leg"><div class="leg-dot" style="background:#DCEDC8;border:2px solid #7CB342"></div>예보 일치</div>
+  <div class="leg"><div class="leg-dot" style="background:#FFCDD2;border:2px solid #E57373"></div>예보 불일치</div>
+  <span style="font-size:.72rem;color:#aaa">| 예)예보 / 실)실측</span>
+</div>
+
+<div class="ctrl">
+  <div class="ctrl-group">
+    <label>📅 월 선택</label>
+    <div class="month-tabs" id="mTabs"></div>
+  </div>
+  <div class="ctrl-group">
+    <label>🔍 필터</label>
+    <div class="ftabs" id="fTabs"></div>
+  </div>
+</div>
+
+<div class="mbar"><div class="mbar-inner" id="mBar"></div></div>
+
+<div class="cals" id="cals"></div>
+
+<footer>
+  데이터: 기상청 강수확률 예보 + Open-Meteo 실측 강수량 (2025.01.01–12.31) · 양재1동<br>
+  A=맑음(예보 0%/실측 0mm) · B=흐림(1–50%/0–5mm) · C=비(51%+/5mm+)
+</footer>
+
+<script>
+const DATA=[{"date": "2025-01-01", "m": 1, "d": 1, "wd": "수", "prob": 20, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-01-02", "m": 1, "d": 2, "wd": "목", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-01-03", "m": 1, "d": 3, "wd": "금", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-01-04", "m": 1, "d": 4, "wd": "토", "prob": 60, "fc": "C", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-01-05", "m": 1, "d": 5, "wd": "일", "prob": 60, "fc": "C", "mm": 6.7, "act": "C", "ok": true}, {"date": "2025-01-06", "m": 1, "d": 6, "wd": "월", "prob": 30, "fc": "B", "mm": 2.7, "act": "B", "ok": true}, {"date": "2025-01-07", "m": 1, "d": 7, "wd": "화", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-01-08", "m": 1, "d": 8, "wd": "수", "prob": 20, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-01-09", "m": 1, "d": 9, "wd": "목", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-01-10", "m": 1, "d": 10, "wd": "금", "prob": 20, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-01-11", "m": 1, "d": 11, "wd": "토", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-01-12", "m": 1, "d": 12, "wd": "일", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-01-13", "m": 1, "d": 13, "wd": "월", "prob": 60, "fc": "C", "mm": 0.6, "act": "B", "ok": false}, {"date": "2025-01-14", "m": 1, "d": 14, "wd": "화", "prob": 20, "fc": "B", "mm": 0.2, "act": "B", "ok": true}, {"date": "2025-01-15", "m": 1, "d": 15, "wd": "수", "prob": 60, "fc": "C", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-01-16", "m": 1, "d": 16, "wd": "목", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-01-17", "m": 1, "d": 17, "wd": "금", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-01-18", "m": 1, "d": 18, "wd": "토", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-01-19", "m": 1, "d": 19, "wd": "일", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-01-20", "m": 1, "d": 20, "wd": "월", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-01-21", "m": 1, "d": 21, "wd": "화", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-01-22", "m": 1, "d": 22, "wd": "수", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-01-23", "m": 1, "d": 23, "wd": "목", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-01-24", "m": 1, "d": 24, "wd": "금", "prob": 20, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-01-25", "m": 1, "d": 25, "wd": "토", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-01-26", "m": 1, "d": 26, "wd": "일", "prob": 60, "fc": "C", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-01-27", "m": 1, "d": 27, "wd": "월", "prob": 60, "fc": "C", "mm": 5.4, "act": "C", "ok": true}, {"date": "2025-01-28", "m": 1, "d": 28, "wd": "화", "prob": 30, "fc": "B", "mm": 0.1, "act": "B", "ok": true}, {"date": "2025-01-29", "m": 1, "d": 29, "wd": "수", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-01-30", "m": 1, "d": 30, "wd": "목", "prob": 60, "fc": "C", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-01-31", "m": 1, "d": 31, "wd": "금", "prob": 30, "fc": "B", "mm": 3.0, "act": "B", "ok": true}, {"date": "2025-02-01", "m": 2, "d": 1, "wd": "토", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-02-02", "m": 2, "d": 2, "wd": "일", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-02-03", "m": 2, "d": 3, "wd": "월", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-02-04", "m": 2, "d": 4, "wd": "화", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-02-05", "m": 2, "d": 5, "wd": "수", "prob": 60, "fc": "C", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-02-06", "m": 2, "d": 6, "wd": "목", "prob": 60, "fc": "C", "mm": 2.3, "act": "B", "ok": false}, {"date": "2025-02-07", "m": 2, "d": 7, "wd": "금", "prob": 20, "fc": "B", "mm": 1.1, "act": "B", "ok": true}, {"date": "2025-02-08", "m": 2, "d": 8, "wd": "토", "prob": 20, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-02-09", "m": 2, "d": 9, "wd": "일", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-02-10", "m": 2, "d": 10, "wd": "월", "prob": 0, "fc": "A", "mm": 0.2, "act": "B", "ok": false}, {"date": "2025-02-11", "m": 2, "d": 11, "wd": "화", "prob": 70, "fc": "C", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-02-12", "m": 2, "d": 12, "wd": "수", "prob": 30, "fc": "B", "mm": 2.4, "act": "B", "ok": true}, {"date": "2025-02-13", "m": 2, "d": 13, "wd": "목", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-02-14", "m": 2, "d": 14, "wd": "금", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-02-15", "m": 2, "d": 15, "wd": "토", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-02-16", "m": 2, "d": 16, "wd": "일", "prob": 20, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-02-17", "m": 2, "d": 17, "wd": "월", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-02-18", "m": 2, "d": 18, "wd": "화", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-02-19", "m": 2, "d": 19, "wd": "수", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-02-20", "m": 2, "d": 20, "wd": "목", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-02-21", "m": 2, "d": 21, "wd": "금", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-02-22", "m": 2, "d": 22, "wd": "토", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-02-23", "m": 2, "d": 23, "wd": "일", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-02-24", "m": 2, "d": 24, "wd": "월", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-02-25", "m": 2, "d": 25, "wd": "화", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-02-26", "m": 2, "d": 26, "wd": "수", "prob": 20, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-02-27", "m": 2, "d": 27, "wd": "목", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-02-28", "m": 2, "d": 28, "wd": "금", "prob": 60, "fc": "C", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-03-01", "m": 3, "d": 1, "wd": "토", "prob": 60, "fc": "C", "mm": 2.2, "act": "B", "ok": false}, {"date": "2025-03-02", "m": 3, "d": 2, "wd": "일", "prob": 80, "fc": "C", "mm": 14.2, "act": "C", "ok": true}, {"date": "2025-03-03", "m": 3, "d": 3, "wd": "월", "prob": 80, "fc": "C", "mm": 10.5, "act": "C", "ok": true}, {"date": "2025-03-04", "m": 3, "d": 4, "wd": "화", "prob": 80, "fc": "C", "mm": 3.5, "act": "B", "ok": false}, {"date": "2025-03-05", "m": 3, "d": 5, "wd": "수", "prob": 30, "fc": "B", "mm": 0.1, "act": "B", "ok": true}, {"date": "2025-03-06", "m": 3, "d": 6, "wd": "목", "prob": 20, "fc": "B", "mm": 0.1, "act": "B", "ok": true}, {"date": "2025-03-07", "m": 3, "d": 7, "wd": "금", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-03-08", "m": 3, "d": 8, "wd": "토", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-03-09", "m": 3, "d": 9, "wd": "일", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-03-10", "m": 3, "d": 10, "wd": "월", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-03-11", "m": 3, "d": 11, "wd": "화", "prob": 60, "fc": "C", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-03-12", "m": 3, "d": 12, "wd": "수", "prob": 20, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-03-13", "m": 3, "d": 13, "wd": "목", "prob": 20, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-03-14", "m": 3, "d": 14, "wd": "금", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-03-15", "m": 3, "d": 15, "wd": "토", "prob": 60, "fc": "C", "mm": 0.2, "act": "B", "ok": false}, {"date": "2025-03-16", "m": 3, "d": 16, "wd": "일", "prob": 60, "fc": "C", "mm": 1.2, "act": "B", "ok": false}, {"date": "2025-03-17", "m": 3, "d": 17, "wd": "월", "prob": 60, "fc": "C", "mm": 0.4, "act": "B", "ok": false}, {"date": "2025-03-18", "m": 3, "d": 18, "wd": "화", "prob": 30, "fc": "B", "mm": 4.5, "act": "B", "ok": true}, {"date": "2025-03-19", "m": 3, "d": 19, "wd": "수", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-03-20", "m": 3, "d": 20, "wd": "목", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-03-21", "m": 3, "d": 21, "wd": "금", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-03-22", "m": 3, "d": 22, "wd": "토", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-03-23", "m": 3, "d": 23, "wd": "일", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-03-24", "m": 3, "d": 24, "wd": "월", "prob": 30, "fc": "B", "mm": 0.8, "act": "B", "ok": true}, {"date": "2025-03-25", "m": 3, "d": 25, "wd": "화", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-03-26", "m": 3, "d": 26, "wd": "수", "prob": 72, "fc": "C", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-03-27", "m": 3, "d": 27, "wd": "목", "prob": 30, "fc": "B", "mm": 5.7, "act": "C", "ok": false}, {"date": "2025-03-28", "m": 3, "d": 28, "wd": "금", "prob": 60, "fc": "C", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-03-29", "m": 3, "d": 29, "wd": "토", "prob": 20, "fc": "B", "mm": 1.2, "act": "B", "ok": true}, {"date": "2025-03-30", "m": 3, "d": 30, "wd": "일", "prob": 0, "fc": "A", "mm": 0.9, "act": "B", "ok": false}, {"date": "2025-03-31", "m": 3, "d": 31, "wd": "월", "prob": 20, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-04-01", "m": 4, "d": 1, "wd": "화", "prob": 60, "fc": "C", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-04-02", "m": 4, "d": 2, "wd": "수", "prob": 60, "fc": "C", "mm": 0.5, "act": "B", "ok": false}, {"date": "2025-04-03", "m": 4, "d": 3, "wd": "목", "prob": 20, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-04-04", "m": 4, "d": 4, "wd": "금", "prob": 60, "fc": "C", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-04-05", "m": 4, "d": 5, "wd": "토", "prob": 30, "fc": "B", "mm": 15.0, "act": "C", "ok": false}, {"date": "2025-04-06", "m": 4, "d": 6, "wd": "일", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-04-07", "m": 4, "d": 7, "wd": "월", "prob": 60, "fc": "C", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-04-08", "m": 4, "d": 8, "wd": "화", "prob": 30, "fc": "B", "mm": 0.5, "act": "B", "ok": true}, {"date": "2025-04-09", "m": 4, "d": 9, "wd": "수", "prob": 60, "fc": "C", "mm": 1.2, "act": "B", "ok": false}, {"date": "2025-04-10", "m": 4, "d": 10, "wd": "목", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-04-11", "m": 4, "d": 11, "wd": "금", "prob": 62, "fc": "C", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-04-12", "m": 4, "d": 12, "wd": "토", "prob": 65, "fc": "C", "mm": 13.5, "act": "C", "ok": true}, {"date": "2025-04-13", "m": 4, "d": 13, "wd": "일", "prob": 60, "fc": "C", "mm": 10.2, "act": "C", "ok": true}, {"date": "2025-04-14", "m": 4, "d": 14, "wd": "월", "prob": 60, "fc": "C", "mm": 7.2, "act": "C", "ok": true}, {"date": "2025-04-15", "m": 4, "d": 15, "wd": "화", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-04-16", "m": 4, "d": 16, "wd": "수", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-04-17", "m": 4, "d": 17, "wd": "목", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-04-18", "m": 4, "d": 18, "wd": "금", "prob": 63, "fc": "C", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-04-19", "m": 4, "d": 19, "wd": "토", "prob": 60, "fc": "C", "mm": 15.2, "act": "C", "ok": true}, {"date": "2025-04-20", "m": 4, "d": 20, "wd": "일", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-04-21", "m": 4, "d": 21, "wd": "월", "prob": 76, "fc": "C", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-04-22", "m": 4, "d": 22, "wd": "화", "prob": 60, "fc": "C", "mm": 24.3, "act": "C", "ok": true}, {"date": "2025-04-23", "m": 4, "d": 23, "wd": "수", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-04-24", "m": 4, "d": 24, "wd": "목", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-04-25", "m": 4, "d": 25, "wd": "금", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-04-26", "m": 4, "d": 26, "wd": "토", "prob": 20, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-04-27", "m": 4, "d": 27, "wd": "일", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-04-28", "m": 4, "d": 28, "wd": "월", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-04-29", "m": 4, "d": 29, "wd": "화", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-04-30", "m": 4, "d": 30, "wd": "수", "prob": 95, "fc": "C", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-05-01", "m": 5, "d": 1, "wd": "목", "prob": 60, "fc": "C", "mm": 18.5, "act": "C", "ok": true}, {"date": "2025-05-02", "m": 5, "d": 2, "wd": "금", "prob": 60, "fc": "C", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-05-03", "m": 5, "d": 3, "wd": "토", "prob": 30, "fc": "B", "mm": 8.8, "act": "C", "ok": false}, {"date": "2025-05-04", "m": 5, "d": 4, "wd": "일", "prob": 60, "fc": "C", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-05-05", "m": 5, "d": 5, "wd": "월", "prob": 30, "fc": "B", "mm": 0.2, "act": "B", "ok": true}, {"date": "2025-05-06", "m": 5, "d": 6, "wd": "화", "prob": 20, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-05-07", "m": 5, "d": 7, "wd": "수", "prob": 0, "fc": "A", "mm": 0.2, "act": "B", "ok": false}, {"date": "2025-05-08", "m": 5, "d": 8, "wd": "목", "prob": 60, "fc": "C", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-05-09", "m": 5, "d": 9, "wd": "금", "prob": 60, "fc": "C", "mm": 32.9, "act": "C", "ok": true}, {"date": "2025-05-10", "m": 5, "d": 10, "wd": "토", "prob": 30, "fc": "B", "mm": 5.7, "act": "C", "ok": false}, {"date": "2025-05-11", "m": 5, "d": 11, "wd": "일", "prob": 20, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-05-12", "m": 5, "d": 12, "wd": "월", "prob": 20, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-05-13", "m": 5, "d": 13, "wd": "화", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-05-14", "m": 5, "d": 14, "wd": "수", "prob": 92, "fc": "C", "mm": 0.1, "act": "B", "ok": false}, {"date": "2025-05-15", "m": 5, "d": 15, "wd": "목", "prob": 60, "fc": "C", "mm": 3.3, "act": "B", "ok": false}, {"date": "2025-05-16", "m": 5, "d": 16, "wd": "금", "prob": 60, "fc": "C", "mm": 13.7, "act": "C", "ok": true}, {"date": "2025-05-17", "m": 5, "d": 17, "wd": "토", "prob": 60, "fc": "C", "mm": 3.2, "act": "B", "ok": false}, {"date": "2025-05-18", "m": 5, "d": 18, "wd": "일", "prob": 60, "fc": "C", "mm": 0.1, "act": "B", "ok": false}, {"date": "2025-05-19", "m": 5, "d": 19, "wd": "월", "prob": 60, "fc": "C", "mm": 0.3, "act": "B", "ok": false}, {"date": "2025-05-20", "m": 5, "d": 20, "wd": "화", "prob": 30, "fc": "B", "mm": 0.3, "act": "B", "ok": true}, {"date": "2025-05-21", "m": 5, "d": 21, "wd": "수", "prob": 60, "fc": "C", "mm": 0.2, "act": "B", "ok": false}, {"date": "2025-05-22", "m": 5, "d": 22, "wd": "목", "prob": 30, "fc": "B", "mm": 0.8, "act": "B", "ok": true}, {"date": "2025-05-23", "m": 5, "d": 23, "wd": "금", "prob": 30, "fc": "B", "mm": 1.8, "act": "B", "ok": true}, {"date": "2025-05-24", "m": 5, "d": 24, "wd": "토", "prob": 30, "fc": "B", "mm": 1.5, "act": "B", "ok": true}, {"date": "2025-05-25", "m": 5, "d": 25, "wd": "일", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-05-26", "m": 5, "d": 26, "wd": "월", "prob": 20, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-05-27", "m": 5, "d": 27, "wd": "화", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-05-28", "m": 5, "d": 28, "wd": "수", "prob": 60, "fc": "C", "mm": 5.7, "act": "C", "ok": true}, {"date": "2025-05-29", "m": 5, "d": 29, "wd": "목", "prob": 60, "fc": "C", "mm": 0.6, "act": "B", "ok": false}, {"date": "2025-05-30", "m": 5, "d": 30, "wd": "금", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-05-31", "m": 5, "d": 31, "wd": "토", "prob": 20, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-06-01", "m": 6, "d": 1, "wd": "일", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-06-02", "m": 6, "d": 2, "wd": "월", "prob": 30, "fc": "B", "mm": 0.9, "act": "B", "ok": true}, {"date": "2025-06-03", "m": 6, "d": 3, "wd": "화", "prob": 20, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-06-04", "m": 6, "d": 4, "wd": "수", "prob": 0, "fc": "A", "mm": 0.1, "act": "B", "ok": false}, {"date": "2025-06-05", "m": 6, "d": 5, "wd": "목", "prob": 20, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-06-06", "m": 6, "d": 6, "wd": "금", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-06-07", "m": 6, "d": 7, "wd": "토", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-06-08", "m": 6, "d": 8, "wd": "일", "prob": 30, "fc": "B", "mm": 1.0, "act": "B", "ok": true}, {"date": "2025-06-09", "m": 6, "d": 9, "wd": "월", "prob": 30, "fc": "B", "mm": 0.1, "act": "B", "ok": true}, {"date": "2025-06-10", "m": 6, "d": 10, "wd": "화", "prob": 0, "fc": "A", "mm": 0.2, "act": "B", "ok": false}, {"date": "2025-06-11", "m": 6, "d": 11, "wd": "수", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-06-12", "m": 6, "d": 12, "wd": "목", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-06-13", "m": 6, "d": 13, "wd": "금", "prob": 66, "fc": "C", "mm": 1.4, "act": "B", "ok": false}, {"date": "2025-06-14", "m": 6, "d": 14, "wd": "토", "prob": 60, "fc": "C", "mm": 0.3, "act": "B", "ok": false}, {"date": "2025-06-15", "m": 6, "d": 15, "wd": "일", "prob": 100, "fc": "C", "mm": 13.1, "act": "C", "ok": true}, {"date": "2025-06-16", "m": 6, "d": 16, "wd": "월", "prob": 30, "fc": "B", "mm": 9.2, "act": "C", "ok": false}, {"date": "2025-06-17", "m": 6, "d": 17, "wd": "화", "prob": 0, "fc": "A", "mm": 0.1, "act": "B", "ok": false}, {"date": "2025-06-18", "m": 6, "d": 18, "wd": "수", "prob": 20, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-06-19", "m": 6, "d": 19, "wd": "목", "prob": 65, "fc": "C", "mm": 2.0, "act": "B", "ok": false}, {"date": "2025-06-20", "m": 6, "d": 20, "wd": "금", "prob": 80, "fc": "C", "mm": 44.9, "act": "C", "ok": true}, {"date": "2025-06-21", "m": 6, "d": 21, "wd": "토", "prob": 30, "fc": "B", "mm": 1.0, "act": "B", "ok": true}, {"date": "2025-06-22", "m": 6, "d": 22, "wd": "일", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-06-23", "m": 6, "d": 23, "wd": "월", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-06-24", "m": 6, "d": 24, "wd": "화", "prob": 60, "fc": "C", "mm": 3.1, "act": "B", "ok": false}, {"date": "2025-06-25", "m": 6, "d": 25, "wd": "수", "prob": 60, "fc": "C", "mm": 10.2, "act": "C", "ok": true}, {"date": "2025-06-26", "m": 6, "d": 26, "wd": "목", "prob": 30, "fc": "B", "mm": 0.4, "act": "B", "ok": true}, {"date": "2025-06-27", "m": 6, "d": 27, "wd": "금", "prob": 60, "fc": "C", "mm": 0.8, "act": "B", "ok": false}, {"date": "2025-06-28", "m": 6, "d": 28, "wd": "토", "prob": 60, "fc": "C", "mm": 14.4, "act": "C", "ok": true}, {"date": "2025-06-29", "m": 6, "d": 29, "wd": "일", "prob": 30, "fc": "B", "mm": 0.8, "act": "B", "ok": true}, {"date": "2025-06-30", "m": 6, "d": 30, "wd": "월", "prob": 60, "fc": "C", "mm": 0.8, "act": "B", "ok": false}, {"date": "2025-07-01", "m": 7, "d": 1, "wd": "화", "prob": 30, "fc": "B", "mm": 11.4, "act": "C", "ok": false}, {"date": "2025-07-02", "m": 7, "d": 2, "wd": "수", "prob": 30, "fc": "B", "mm": 0.5, "act": "B", "ok": true}, {"date": "2025-07-03", "m": 7, "d": 3, "wd": "목", "prob": 30, "fc": "B", "mm": 0.8, "act": "B", "ok": true}, {"date": "2025-07-04", "m": 7, "d": 4, "wd": "금", "prob": 60, "fc": "C", "mm": 0.3, "act": "B", "ok": false}, {"date": "2025-07-05", "m": 7, "d": 5, "wd": "토", "prob": 30, "fc": "B", "mm": 0.4, "act": "B", "ok": true}, {"date": "2025-07-06", "m": 7, "d": 6, "wd": "일", "prob": 30, "fc": "B", "mm": 0.7, "act": "B", "ok": true}, {"date": "2025-07-07", "m": 7, "d": 7, "wd": "월", "prob": 20, "fc": "B", "mm": 1.1, "act": "B", "ok": true}, {"date": "2025-07-08", "m": 7, "d": 8, "wd": "화", "prob": 60, "fc": "C", "mm": 0.1, "act": "B", "ok": false}, {"date": "2025-07-09", "m": 7, "d": 9, "wd": "수", "prob": 20, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-07-10", "m": 7, "d": 10, "wd": "목", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-07-11", "m": 7, "d": 11, "wd": "금", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-07-12", "m": 7, "d": 12, "wd": "토", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-07-13", "m": 7, "d": 13, "wd": "일", "prob": 60, "fc": "C", "mm": 2.3, "act": "B", "ok": false}, {"date": "2025-07-14", "m": 7, "d": 14, "wd": "월", "prob": 60, "fc": "C", "mm": 28.6, "act": "C", "ok": true}, {"date": "2025-07-15", "m": 7, "d": 15, "wd": "화", "prob": 60, "fc": "C", "mm": 10.4, "act": "C", "ok": true}, {"date": "2025-07-16", "m": 7, "d": 16, "wd": "수", "prob": 81, "fc": "C", "mm": 39.5, "act": "C", "ok": true}, {"date": "2025-07-17", "m": 7, "d": 17, "wd": "목", "prob": 97, "fc": "C", "mm": 39.0, "act": "C", "ok": true}, {"date": "2025-07-18", "m": 7, "d": 18, "wd": "금", "prob": 60, "fc": "C", "mm": 37.4, "act": "C", "ok": true}, {"date": "2025-07-19", "m": 7, "d": 19, "wd": "토", "prob": 60, "fc": "C", "mm": 55.7, "act": "C", "ok": true}, {"date": "2025-07-20", "m": 7, "d": 20, "wd": "일", "prob": 60, "fc": "C", "mm": 13.2, "act": "C", "ok": true}, {"date": "2025-07-21", "m": 7, "d": 21, "wd": "월", "prob": 60, "fc": "C", "mm": 1.6, "act": "B", "ok": false}, {"date": "2025-07-22", "m": 7, "d": 22, "wd": "화", "prob": 60, "fc": "C", "mm": 6.0, "act": "C", "ok": true}, {"date": "2025-07-23", "m": 7, "d": 23, "wd": "수", "prob": 20, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-07-24", "m": 7, "d": 24, "wd": "목", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-07-25", "m": 7, "d": 25, "wd": "금", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-07-26", "m": 7, "d": 26, "wd": "토", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-07-27", "m": 7, "d": 27, "wd": "일", "prob": 20, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-07-28", "m": 7, "d": 28, "wd": "월", "prob": 0, "fc": "A", "mm": 0.3, "act": "B", "ok": false}, {"date": "2025-07-29", "m": 7, "d": 29, "wd": "화", "prob": 20, "fc": "B", "mm": 1.1, "act": "B", "ok": true}, {"date": "2025-07-30", "m": 7, "d": 30, "wd": "수", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-07-31", "m": 7, "d": 31, "wd": "목", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-08-01", "m": 8, "d": 1, "wd": "금", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-08-02", "m": 8, "d": 2, "wd": "토", "prob": 30, "fc": "B", "mm": 0.5, "act": "B", "ok": true}, {"date": "2025-08-03", "m": 8, "d": 3, "wd": "일", "prob": 87, "fc": "C", "mm": 1.7, "act": "B", "ok": false}, {"date": "2025-08-04", "m": 8, "d": 4, "wd": "월", "prob": 30, "fc": "B", "mm": 6.4, "act": "C", "ok": false}, {"date": "2025-08-05", "m": 8, "d": 5, "wd": "화", "prob": 87, "fc": "C", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-08-06", "m": 8, "d": 6, "wd": "수", "prob": 30, "fc": "B", "mm": 11.9, "act": "C", "ok": false}, {"date": "2025-08-07", "m": 8, "d": 7, "wd": "목", "prob": 30, "fc": "B", "mm": 1.2, "act": "B", "ok": true}, {"date": "2025-08-08", "m": 8, "d": 8, "wd": "금", "prob": 60, "fc": "C", "mm": 0.2, "act": "B", "ok": false}, {"date": "2025-08-09", "m": 8, "d": 9, "wd": "토", "prob": 60, "fc": "C", "mm": 5.5, "act": "C", "ok": true}, {"date": "2025-08-10", "m": 8, "d": 10, "wd": "일", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-08-11", "m": 8, "d": 11, "wd": "월", "prob": 30, "fc": "B", "mm": 0.1, "act": "B", "ok": true}, {"date": "2025-08-12", "m": 8, "d": 12, "wd": "화", "prob": 60, "fc": "C", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-08-13", "m": 8, "d": 13, "wd": "수", "prob": 88, "fc": "C", "mm": 47.8, "act": "C", "ok": true}, {"date": "2025-08-14", "m": 8, "d": 14, "wd": "목", "prob": 60, "fc": "C", "mm": 33.2, "act": "C", "ok": true}, {"date": "2025-08-15", "m": 8, "d": 15, "wd": "금", "prob": 30, "fc": "B", "mm": 1.7, "act": "B", "ok": true}, {"date": "2025-08-16", "m": 8, "d": 16, "wd": "토", "prob": 30, "fc": "B", "mm": 0.6, "act": "B", "ok": true}, {"date": "2025-08-17", "m": 8, "d": 17, "wd": "일", "prob": 60, "fc": "C", "mm": 0.7, "act": "B", "ok": false}, {"date": "2025-08-18", "m": 8, "d": 18, "wd": "월", "prob": 60, "fc": "C", "mm": 0.6, "act": "B", "ok": false}, {"date": "2025-08-19", "m": 8, "d": 19, "wd": "화", "prob": 60, "fc": "C", "mm": 1.4, "act": "B", "ok": false}, {"date": "2025-08-20", "m": 8, "d": 20, "wd": "수", "prob": 30, "fc": "B", "mm": 2.5, "act": "B", "ok": true}, {"date": "2025-08-21", "m": 8, "d": 21, "wd": "목", "prob": 30, "fc": "B", "mm": 0.5, "act": "B", "ok": true}, {"date": "2025-08-22", "m": 8, "d": 22, "wd": "금", "prob": 60, "fc": "C", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-08-23", "m": 8, "d": 23, "wd": "토", "prob": 30, "fc": "B", "mm": 1.1, "act": "B", "ok": true}, {"date": "2025-08-24", "m": 8, "d": 24, "wd": "일", "prob": 60, "fc": "C", "mm": 0.4, "act": "B", "ok": false}, {"date": "2025-08-25", "m": 8, "d": 25, "wd": "월", "prob": 80, "fc": "C", "mm": 18.5, "act": "C", "ok": true}, {"date": "2025-08-26", "m": 8, "d": 26, "wd": "화", "prob": 30, "fc": "B", "mm": 21.5, "act": "C", "ok": false}, {"date": "2025-08-27", "m": 8, "d": 27, "wd": "수", "prob": 30, "fc": "B", "mm": 0.1, "act": "B", "ok": true}, {"date": "2025-08-28", "m": 8, "d": 28, "wd": "목", "prob": 60, "fc": "C", "mm": 2.2, "act": "B", "ok": false}, {"date": "2025-08-29", "m": 8, "d": 29, "wd": "금", "prob": 60, "fc": "C", "mm": 29.9, "act": "C", "ok": true}, {"date": "2025-08-30", "m": 8, "d": 30, "wd": "토", "prob": 60, "fc": "C", "mm": 4.2, "act": "B", "ok": false}, {"date": "2025-08-31", "m": 8, "d": 31, "wd": "일", "prob": 60, "fc": "C", "mm": 7.0, "act": "C", "ok": true}, {"date": "2025-09-01", "m": 9, "d": 1, "wd": "월", "prob": 60, "fc": "C", "mm": 18.6, "act": "C", "ok": true}, {"date": "2025-09-02", "m": 9, "d": 2, "wd": "화", "prob": 20, "fc": "B", "mm": 0.1, "act": "B", "ok": true}, {"date": "2025-09-03", "m": 9, "d": 3, "wd": "수", "prob": 60, "fc": "C", "mm": 0.1, "act": "B", "ok": false}, {"date": "2025-09-04", "m": 9, "d": 4, "wd": "목", "prob": 30, "fc": "B", "mm": 21.2, "act": "C", "ok": false}, {"date": "2025-09-05", "m": 9, "d": 5, "wd": "금", "prob": 60, "fc": "C", "mm": 0.2, "act": "B", "ok": false}, {"date": "2025-09-06", "m": 9, "d": 6, "wd": "토", "prob": 70, "fc": "C", "mm": 36.7, "act": "C", "ok": true}, {"date": "2025-09-07", "m": 9, "d": 7, "wd": "일", "prob": 20, "fc": "B", "mm": 1.0, "act": "B", "ok": true}, {"date": "2025-09-08", "m": 9, "d": 8, "wd": "월", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-09-09", "m": 9, "d": 9, "wd": "화", "prob": 0, "fc": "A", "mm": 0.3, "act": "B", "ok": false}, {"date": "2025-09-10", "m": 9, "d": 10, "wd": "수", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-09-11", "m": 9, "d": 11, "wd": "목", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-09-12", "m": 9, "d": 12, "wd": "금", "prob": 100, "fc": "C", "mm": 8.0, "act": "C", "ok": true}, {"date": "2025-09-13", "m": 9, "d": 13, "wd": "토", "prob": 30, "fc": "B", "mm": 46.8, "act": "C", "ok": false}, {"date": "2025-09-14", "m": 9, "d": 14, "wd": "일", "prob": 30, "fc": "B", "mm": 0.3, "act": "B", "ok": true}, {"date": "2025-09-15", "m": 9, "d": 15, "wd": "월", "prob": 60, "fc": "C", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-09-16", "m": 9, "d": 16, "wd": "화", "prob": 70, "fc": "C", "mm": 5.8, "act": "C", "ok": true}, {"date": "2025-09-17", "m": 9, "d": 17, "wd": "수", "prob": 60, "fc": "C", "mm": 33.7, "act": "C", "ok": true}, {"date": "2025-09-18", "m": 9, "d": 18, "wd": "목", "prob": 60, "fc": "C", "mm": 0.1, "act": "B", "ok": false}, {"date": "2025-09-19", "m": 9, "d": 19, "wd": "금", "prob": 67, "fc": "C", "mm": 12.1, "act": "C", "ok": true}, {"date": "2025-09-20", "m": 9, "d": 20, "wd": "토", "prob": 30, "fc": "B", "mm": 36.8, "act": "C", "ok": false}, {"date": "2025-09-21", "m": 9, "d": 21, "wd": "일", "prob": 20, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-09-22", "m": 9, "d": 22, "wd": "월", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-09-23", "m": 9, "d": 23, "wd": "화", "prob": 100, "fc": "C", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-09-24", "m": 9, "d": 24, "wd": "수", "prob": 60, "fc": "C", "mm": 42.0, "act": "C", "ok": true}, {"date": "2025-09-25", "m": 9, "d": 25, "wd": "목", "prob": 0, "fc": "A", "mm": 1.5, "act": "B", "ok": false}, {"date": "2025-09-26", "m": 9, "d": 26, "wd": "금", "prob": 20, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-09-27", "m": 9, "d": 27, "wd": "토", "prob": 65, "fc": "C", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-09-28", "m": 9, "d": 28, "wd": "일", "prob": 30, "fc": "B", "mm": 25.0, "act": "C", "ok": false}, {"date": "2025-09-29", "m": 9, "d": 29, "wd": "월", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-09-30", "m": 9, "d": 30, "wd": "화", "prob": 20, "fc": "B", "mm": 0.2, "act": "B", "ok": true}, {"date": "2025-10-01", "m": 10, "d": 1, "wd": "수", "prob": 30, "fc": "B", "mm": 1.6, "act": "B", "ok": true}, {"date": "2025-10-02", "m": 10, "d": 2, "wd": "목", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-10-03", "m": 10, "d": 3, "wd": "금", "prob": 30, "fc": "B", "mm": 1.9, "act": "B", "ok": true}, {"date": "2025-10-04", "m": 10, "d": 4, "wd": "토", "prob": 60, "fc": "C", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-10-05", "m": 10, "d": 5, "wd": "일", "prob": 60, "fc": "C", "mm": 4.4, "act": "B", "ok": false}, {"date": "2025-10-06", "m": 10, "d": 6, "wd": "월", "prob": 60, "fc": "C", "mm": 34.9, "act": "C", "ok": true}, {"date": "2025-10-07", "m": 10, "d": 7, "wd": "화", "prob": 60, "fc": "C", "mm": 18.6, "act": "C", "ok": true}, {"date": "2025-10-08", "m": 10, "d": 8, "wd": "수", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-10-09", "m": 10, "d": 9, "wd": "목", "prob": 60, "fc": "C", "mm": 0.1, "act": "B", "ok": false}, {"date": "2025-10-10", "m": 10, "d": 10, "wd": "금", "prob": 60, "fc": "C", "mm": 19.9, "act": "C", "ok": true}, {"date": "2025-10-11", "m": 10, "d": 11, "wd": "토", "prob": 60, "fc": "C", "mm": 12.4, "act": "C", "ok": true}, {"date": "2025-10-12", "m": 10, "d": 12, "wd": "일", "prob": 60, "fc": "C", "mm": 1.2, "act": "B", "ok": false}, {"date": "2025-10-13", "m": 10, "d": 13, "wd": "월", "prob": 70, "fc": "C", "mm": 23.5, "act": "C", "ok": true}, {"date": "2025-10-14", "m": 10, "d": 14, "wd": "화", "prob": 30, "fc": "B", "mm": 3.2, "act": "B", "ok": true}, {"date": "2025-10-15", "m": 10, "d": 15, "wd": "수", "prob": 60, "fc": "C", "mm": 9.9, "act": "C", "ok": true}, {"date": "2025-10-16", "m": 10, "d": 16, "wd": "목", "prob": 30, "fc": "B", "mm": 8.4, "act": "C", "ok": false}, {"date": "2025-10-17", "m": 10, "d": 17, "wd": "금", "prob": 64, "fc": "C", "mm": 5.7, "act": "C", "ok": true}, {"date": "2025-10-18", "m": 10, "d": 18, "wd": "토", "prob": 30, "fc": "B", "mm": 13.5, "act": "C", "ok": false}, {"date": "2025-10-19", "m": 10, "d": 19, "wd": "일", "prob": 30, "fc": "B", "mm": 0.5, "act": "B", "ok": true}, {"date": "2025-10-20", "m": 10, "d": 20, "wd": "월", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-10-21", "m": 10, "d": 21, "wd": "화", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-10-22", "m": 10, "d": 22, "wd": "수", "prob": 30, "fc": "B", "mm": 0.3, "act": "B", "ok": true}, {"date": "2025-10-23", "m": 10, "d": 23, "wd": "목", "prob": 30, "fc": "B", "mm": 0.7, "act": "B", "ok": true}, {"date": "2025-10-24", "m": 10, "d": 24, "wd": "금", "prob": 30, "fc": "B", "mm": 0.5, "act": "B", "ok": true}, {"date": "2025-10-25", "m": 10, "d": 25, "wd": "토", "prob": 30, "fc": "B", "mm": 1.1, "act": "B", "ok": true}, {"date": "2025-10-26", "m": 10, "d": 26, "wd": "일", "prob": 30, "fc": "B", "mm": 0.3, "act": "B", "ok": true}, {"date": "2025-10-27", "m": 10, "d": 27, "wd": "월", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-10-28", "m": 10, "d": 28, "wd": "화", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-10-29", "m": 10, "d": 29, "wd": "수", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-10-30", "m": 10, "d": 30, "wd": "목", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-10-31", "m": 10, "d": 31, "wd": "금", "prob": 60, "fc": "C", "mm": 0.8, "act": "B", "ok": false}, {"date": "2025-11-01", "m": 11, "d": 1, "wd": "토", "prob": 30, "fc": "B", "mm": 0.7, "act": "B", "ok": true}, {"date": "2025-11-02", "m": 11, "d": 2, "wd": "일", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-11-03", "m": 11, "d": 3, "wd": "월", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-11-04", "m": 11, "d": 4, "wd": "화", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-11-05", "m": 11, "d": 5, "wd": "수", "prob": 20, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-11-06", "m": 11, "d": 6, "wd": "목", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-11-07", "m": 11, "d": 7, "wd": "금", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-11-08", "m": 11, "d": 8, "wd": "토", "prob": 60, "fc": "C", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-11-09", "m": 11, "d": 9, "wd": "일", "prob": 20, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-11-10", "m": 11, "d": 10, "wd": "월", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-11-11", "m": 11, "d": 11, "wd": "화", "prob": 20, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-11-12", "m": 11, "d": 12, "wd": "수", "prob": 20, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-11-13", "m": 11, "d": 13, "wd": "목", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-11-14", "m": 11, "d": 14, "wd": "금", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-11-15", "m": 11, "d": 15, "wd": "토", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-11-16", "m": 11, "d": 16, "wd": "일", "prob": 60, "fc": "C", "mm": 0.5, "act": "B", "ok": false}, {"date": "2025-11-17", "m": 11, "d": 17, "wd": "월", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-11-18", "m": 11, "d": 18, "wd": "화", "prob": 20, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-11-19", "m": 11, "d": 19, "wd": "수", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-11-20", "m": 11, "d": 20, "wd": "목", "prob": 20, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-11-21", "m": 11, "d": 21, "wd": "금", "prob": 20, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-11-22", "m": 11, "d": 22, "wd": "토", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-11-23", "m": 11, "d": 23, "wd": "일", "prob": 60, "fc": "C", "mm": 0.4, "act": "B", "ok": false}, {"date": "2025-11-24", "m": 11, "d": 24, "wd": "월", "prob": 70, "fc": "C", "mm": 0.2, "act": "B", "ok": false}, {"date": "2025-11-25", "m": 11, "d": 25, "wd": "화", "prob": 30, "fc": "B", "mm": 3.7, "act": "B", "ok": true}, {"date": "2025-11-26", "m": 11, "d": 26, "wd": "수", "prob": 60, "fc": "C", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-11-27", "m": 11, "d": 27, "wd": "목", "prob": 0, "fc": "A", "mm": 7.9, "act": "C", "ok": false}, {"date": "2025-11-28", "m": 11, "d": 28, "wd": "금", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-11-29", "m": 11, "d": 29, "wd": "토", "prob": 60, "fc": "C", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-11-30", "m": 11, "d": 30, "wd": "일", "prob": 30, "fc": "B", "mm": 0.3, "act": "B", "ok": true}, {"date": "2025-12-01", "m": 12, "d": 1, "wd": "월", "prob": 30, "fc": "B", "mm": 0.1, "act": "B", "ok": true}, {"date": "2025-12-02", "m": 12, "d": 2, "wd": "화", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-12-03", "m": 12, "d": 3, "wd": "수", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-12-04", "m": 12, "d": 4, "wd": "목", "prob": 60, "fc": "C", "mm": 1.9, "act": "B", "ok": false}, {"date": "2025-12-05", "m": 12, "d": 5, "wd": "금", "prob": 60, "fc": "C", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-12-06", "m": 12, "d": 6, "wd": "토", "prob": 30, "fc": "B", "mm": 1.2, "act": "B", "ok": true}, {"date": "2025-12-07", "m": 12, "d": 7, "wd": "일", "prob": 30, "fc": "B", "mm": 3.2, "act": "B", "ok": true}, {"date": "2025-12-08", "m": 12, "d": 8, "wd": "월", "prob": 20, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-12-09", "m": 12, "d": 9, "wd": "화", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-12-10", "m": 12, "d": 10, "wd": "수", "prob": 60, "fc": "C", "mm": 0.1, "act": "B", "ok": false}, {"date": "2025-12-11", "m": 12, "d": 11, "wd": "목", "prob": 30, "fc": "B", "mm": 12.4, "act": "C", "ok": false}, {"date": "2025-12-12", "m": 12, "d": 12, "wd": "금", "prob": 60, "fc": "C", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-12-13", "m": 12, "d": 13, "wd": "토", "prob": 60, "fc": "C", "mm": 10.5, "act": "C", "ok": true}, {"date": "2025-12-14", "m": 12, "d": 14, "wd": "일", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-12-15", "m": 12, "d": 15, "wd": "월", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-12-16", "m": 12, "d": 16, "wd": "화", "prob": 30, "fc": "B", "mm": 2.8, "act": "B", "ok": true}, {"date": "2025-12-17", "m": 12, "d": 17, "wd": "수", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-12-18", "m": 12, "d": 18, "wd": "목", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-12-19", "m": 12, "d": 19, "wd": "금", "prob": 60, "fc": "C", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-12-20", "m": 12, "d": 20, "wd": "토", "prob": 30, "fc": "B", "mm": 3.2, "act": "B", "ok": true}, {"date": "2025-12-21", "m": 12, "d": 21, "wd": "일", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-12-22", "m": 12, "d": 22, "wd": "월", "prob": 60, "fc": "C", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-12-23", "m": 12, "d": 23, "wd": "화", "prob": 60, "fc": "C", "mm": 10.3, "act": "C", "ok": true}, {"date": "2025-12-24", "m": 12, "d": 24, "wd": "수", "prob": 20, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-12-25", "m": 12, "d": 25, "wd": "목", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-12-26", "m": 12, "d": 26, "wd": "금", "prob": 30, "fc": "B", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-12-27", "m": 12, "d": 27, "wd": "토", "prob": 60, "fc": "C", "mm": 0.0, "act": "A", "ok": false}, {"date": "2025-12-28", "m": 12, "d": 28, "wd": "일", "prob": 60, "fc": "C", "mm": 0.6, "act": "B", "ok": false}, {"date": "2025-12-29", "m": 12, "d": 29, "wd": "월", "prob": 20, "fc": "B", "mm": 0.8, "act": "B", "ok": true}, {"date": "2025-12-30", "m": 12, "d": 30, "wd": "화", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}, {"date": "2025-12-31", "m": 12, "d": 31, "wd": "수", "prob": 0, "fc": "A", "mm": 0.0, "act": "A", "ok": true}];
+
+const EMOJI = {A:"☀",B:"☁",C:"🌧"};
+const WX    = {A:"맑음",B:"흐림",C:"비"};
+const MONTHS= ["전체","1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"];
+const DAYS  = ["월","화","수","목","금","토","일"];
+const DIM   = [0,31,28,31,30,31,30,31,31,30,31,30,31];
+
+let curM=0, curF="all";
+
+function dow0(m){return new Date(2025,m-1,1).getDay()} // 0=일
+function toCol(dow){return(dow+6)%7}                   // 0=월 기준
+
+/* ── 통계 ── */
+function renderStats(){
+  const ok=DATA.filter(r=>r.ok).length;
+  const acc=Math.round(ok/DATA.length*100);
+  const cards=[
+    {n:acc+"%",  l:"연간 예보 정확도"},
+    {n:ok+"일",  l:"✅ 일치"},
+    {n:(DATA.length-ok)+"일", l:"❌ 불일치"},
+    {n:DATA.filter(r=>r.fc==="A").length+"일", l:"예보 ☀ 맑음"},
+    {n:DATA.filter(r=>r.fc==="C").length+"일", l:"예보 🌧 비"},
+    {n:DATA.filter(r=>r.act==="A").length+"일",l:"실측 ☀ 맑음"},
+    {n:DATA.filter(r=>r.act==="C").length+"일",l:"실측 🌧 비"},
+    {n:DATA.reduce((s,r)=>s+r.mm,0).toFixed(0)+"mm",l:"연간 총강수량"},
+  ];
+  document.getElementById("stats").innerHTML=
+    cards.map(c=>`<div class="stat"><div class="stat-n">${c.n}</div><div class="stat-l">${c.l}</div></div>`).join("");
+}
+
+/* ── 탭 ── */
+function renderTabs(){
+  document.getElementById("mTabs").innerHTML=
+    MONTHS.map((n,i)=>`<button class="mtab${i===curM?" on":""}" onclick="setM(${i})">${n}</button>`).join("");
+  [["all","전체"],["O","✅ 일치"],["X","❌ 불일치"]].forEach(([v,l])=>{
+    document.getElementById("fTabs").innerHTML+=
+      `<button class="ftab${curF===v?" on":""}" onclick="setF('${v}')">${l}</button>`;
+  });
+}
+
+/* ── 월 통계바 ── */
+function renderMBar(){
+  const md=curM===0?DATA:DATA.filter(r=>r.m===curM);
+  const ok=md.filter(r=>r.ok).length;
+  const acc=md.length?Math.round(ok/md.length*100):0;
+  const mm=md.reduce((s,r)=>s+r.mm,0).toFixed(1);
+  if(curM===0){
+    document.getElementById("mBar").innerHTML=
+      `<span style="font-size:.82rem;color:#888">월을 선택하면 해당 월 상세 통계가 표시됩니다.</span>`;
+    return;
+  }
+  const fcA=md.filter(r=>r.fc==="A").length,fcB=md.filter(r=>r.fc==="B").length,fcC=md.filter(r=>r.fc==="C").length;
+  const acA=md.filter(r=>r.act==="A").length,acB=md.filter(r=>r.act==="B").length,acC=md.filter(r=>r.act==="C").length;
+  document.getElementById("mBar").innerHTML=`
+    <b style="color:#1F4E79">${MONTHS[curM]}</b>
+    <span style="color:#ccc">|</span>
+    예보 <span class="em-badge em-A">☀ ${fcA}</span>
+         <span class="em-badge em-B">☁ ${fcB}</span>
+         <span class="em-badge em-C">🌧 ${fcC}</span>
+    <span style="color:#ccc">|</span>
+    실측 <span class="em-badge em-A">☀ ${acA}</span>
+         <span class="em-badge em-B">☁ ${acB}</span>
+         <span class="em-badge em-C">🌧 ${acC}</span>
+    <span style="color:#ccc">|</span>
+    강수량 <b>${mm}mm</b>
+    <span style="color:#ccc">|</span>
+    <span class="acc-wrap">
+      <span style="font-size:.78rem;color:#555">정확도</span>
+      <div class="acc-bg"><div class="acc-fill" style="width:${acc}%"></div></div>
+      <span class="acc-pct">${acc}%</span>
+    </span>`;
+}
+
+/* ── 달력 1개월 ── */
+function buildMonth(m){
+  const byDay={};
+  DATA.filter(r=>r.m===m).forEach(r=>byDay[r.d]=r);
+  const dim=DIM[m], fc=toCol(dow0(m));
+  const ok=Object.values(byDay).filter(r=>r.ok).length;
+  const total=Object.values(byDay).length;
+  const acc=total?Math.round(ok/total*100):0;
+  const mm=Object.values(byDay).reduce((s,r)=>s+r.mm,0).toFixed(1);
+
+  const cells=[];
+  for(let i=0;i<fc;i++)cells.push(null);
+  for(let d=1;d<=dim;d++)cells.push(d);
+  while(cells.length%7)cells.push(null);
+
+  let weeks="";
+  for(let w=0;w<cells.length/7;w++){
+    weeks+='<div class="week">';
+    for(let i=0;i<7;i++){
+      const day=cells[w*7+i];
+      const isSat=(i===5),isSun=(i===6);
+      if(!day){weeks+=`<div class="dc empty"></div>`;continue;}
+      const r=byDay[day];
+      const faded=(curF==="O"&&r&&!r.ok)||(curF==="X"&&r&&r.ok);
+      let cls="dc";
+      if(isSat)cls+=" sat";if(isSun)cls+=" sun";
+      if(r){cls+=r.ok?" match":" miss";}
+      if(faded)cls+=" faded";
+
+      if(!r){
+        weeks+=`<div class="${cls}"><div class="dnum-bar"><span class="dnum">${day}</span></div></div>`;
+        continue;
+      }
+      weeks+=`
+        <div class="${cls}">
+          <div class="dnum-bar">
+            <span class="dnum">${day}</span>
+            <span class="micon">${r.ok?"✅":"❌"}</span>
+          </div>
+          <div class="wx-wrap">
+            <div class="wx-row">
+              <span class="wlbl">예)</span>
+              <span class="emoji">${EMOJI[r.fc]}</span>
+              <span class="wx-txt ${r.fc}">${WX[r.fc]}</span>
+            </div>
+            <div class="wx-row">
+              <span class="wlbl">실)</span>
+              <span class="emoji">${EMOJI[r.act]}</span>
+              <span class="wx-txt ${r.act}">${WX[r.act]}</span>
+            </div>
+          </div>
+          <div class="dval">${r.prob}% · ${r.mm}mm</div>
+        </div>`;
+    }
+    weeks+="</div>";
+  }
+
+  return `
+    <div class="month-block">
+      <div class="month-hd">2025년 ${MONTHS[m]}<span>정확도 ${acc}% · 강수 ${mm}mm · 일치 ${ok}일 / 불일치 ${total-ok}일</span></div>
+      <div class="cal-inner">
+        <div class="dow-row">${DAYS.map(d=>`<div>${d}</div>`).join("")}</div>
+        ${weeks}
+      </div>
+    </div>`;
+}
+
+/* ── 메인 렌더 ── */
+function render(){
+  renderTabs();
+  renderMBar();
+  const months=curM===0?[1,2,3,4,5,6,7,8,9,10,11,12]:[curM];
+  document.getElementById("cals").innerHTML=months.map(buildMonth).join("");
+}
+
+function setM(m){curM=m;render();}
+function setF(f){curF=f;render();}
+
+renderStats();
+render();
+</script>
+</body>
+</html>
